@@ -17,3 +17,6 @@ RUN apt-get update \
         postgresql-${POSTGRES_MAJOR}-cron \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /docker-entrypoint-initdb.d
+COPY ./initdb-cron.sh /docker-entrypoint-initdb.d/10_pg_cron.sh
+
