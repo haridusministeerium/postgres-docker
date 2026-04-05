@@ -1,10 +1,37 @@
-provides an [upstream](https://hub.docker.com/_/postgres) postgres image
+# THIS IMAGE NOT IN USE
+
+Was created to provide upstream image w/ cron extension pre-installed.
+Problem with this is tho that this extension can only be created in a single
+database, thus limits number of apps that can access it, or at least makes
+the coordination more complex. For split-pro app we went with separate
+postgres instance instead.
+
+Also note there's no real need for the init script, as the extension can simply
+be installed from the psql command line (i.e. same command we run from the
+included init script), and afterwards the `create` statement will be included
+in the db dump. So the only real value provided by this image would be the
+apt-installed `postgresql-<ver>-cron` package.
+
+---
+
+Provides an [upstream](https://hub.docker.com/_/postgres) postgres image
 with cron extension preinstalled
+
+For the upstream Dockerfile, see [here](https://github.com/docker-library/postgres)
 
 ## installing pg_cron
 
 - see https://github.com/citusdata/pg_cron#installing-pg_cron
 - tl;dr: see [Dockerfile](./Dockerfile)
+
+> [!NOTE]
+> For the initial startup, make sure to add required options to cmd, as by this
+point we haven't yet restored `postgres.conf` file that includes these keys:
+`postgres -c shared_preload_libraries=pg_cron -c cron.database_name=postgres`
+
+If not, the init script will likely error, but as database is initialized, then
+on the subsequent restarts the init scripts no longer run, as described in our
+init file header.
 
 
 ## upgrading major pgres versions
@@ -25,7 +52,7 @@ with cron extension preinstalled
 - recommended to use `pg_dump*` programs from the newer version, but so far
   I've been ignoring it and dumping w/ the pg_dump from old container.
 
-1. either stop all services using db, or better yet disable their access:
+1. either stop all services using db, or disable their access (or do both!):
     - `nvim /mnt/user/appdata/postgres/pg_hba.conf`
     - sroll to the bottom
     - change all entries' `METHOD` value from `trust` to `reject` that do _not_
@@ -42,10 +69,10 @@ with cron extension preinstalled
 1. start the container/service
 1. restore `pg_hba.conf` & `postgresql.conf`
     - optionally diff them from host beforehand:
-    - `vimdiff /mnt/user/appdata/postgres.old/postgresql.conf /mnt/user/appdata/postgres/postgresql.conf`
-    - `vimdiff /mnt/user/appdata/postgres.old/pg_hba.conf /mnt/user/appdata/postgres/pg_hba.conf`
-      - make sure not to revert access resjection yet!
-    - `cp -- /mnt/user/appdata/postgres.old/{postgresql.conf,pg_hba.conf} /mnt/user/appdata/postgres/`
+        - `vimdiff /mnt/user/appdata/postgres.old/postgresql.conf /mnt/user/appdata/postgres/postgresql.conf`
+        - `vimdiff /mnt/user/appdata/postgres.old/pg_hba.conf /mnt/user/appdata/postgres/pg_hba.conf`
+            - make sure not to revert access restriction yet!
+    - `cp /mnt/user/appdata/postgres.old/{postgresql.conf,pg_hba.conf} /mnt/user/appdata/postgres/`
 1. restart the container
 1. on host, move dump to new dir: `cp /mnt/user/appdata/postgres.old/dumpall-* /mnt/user/appdata/postgres/`
 1. restore data: `psql -d postgres -U postgres -f /config/dumpall-???; echo $?`
