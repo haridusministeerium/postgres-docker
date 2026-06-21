@@ -37,7 +37,7 @@ init file header.
 ## upgrading major pgres versions
 
 - option 1: use [pg_upgrade](https://www.postgresql.org/docs/current/pgupgrade.html)
-- option 2: via `pg_dumpall` [docs](https://www.postgresql.org/docs/16/upgrading.html#UPGRADING-VIA-PGDUMPALL)
+- option 2: via `pg_dumpall` [docs](https://www.postgresql.org/docs/current/upgrading.html#UPGRADING-VIA-PGDUMPALL)
     - supposedly safer
 
 
